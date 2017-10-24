@@ -396,6 +396,9 @@ namespace Modules
 		VarCameraShowCoordinates = AddVariableInt("ShowCoordinates", "coords", "The cameras field of view", eCommandFlagsArchived, 0, VariableCameraShowCoordinatesUpdate);
 		VarCameraShowCoordinates->ValueIntMin = 0;
 		VarCameraShowCoordinates->ValueIntMax = 1;
+
+		AddCommand("CameraSave", "camera_save", "Saves the cameras current position so that it can be loaded, only works when camera mode is fly or static", eCommandFlagsNone, VariableCameraSave);
+		AddCommand("CameraLoad", "camera_load", "Loads the cameras last saved position, only works when camera mode is fly or static", eCommandFlagsNone, VariableCameraLoad);
 	}
 
 	ModuleCamera::CameraPosistion ModuleCamera::GetPosition()
