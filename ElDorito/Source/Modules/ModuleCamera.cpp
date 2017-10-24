@@ -170,33 +170,35 @@ namespace
 		return true;
 	}
 
-	//bool VariableCameraSave(const std::vector<std::string>& Arguments, std::string& returnInfo)
-	//{
-	//	auto mode = Utils::String::ToLower(Modules::ModuleCamera::Instance().VarCameraMode->ValueString);
-	//	Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
+	bool VariableCameraSave(const std::vector<std::string>& Arguments, std::string& returnInfo)
+	{
+		auto mode = Utils::String::ToLower(Modules::ModuleCamera::Instance().VarCameraMode->ValueString);
+		Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
 
-	//	// only allow saving while in flycam or static modes
-	//	if (mode != "flying" && mode != "static")
-	//		return true;
+		// only allow saving while in flycam or static modes
+		if (mode != "flying" && mode != "static")
+			return true;
 
-	//	// TODO: finish
+		// TODO: finish
+		Modules::ModuleCamera::Instance().lastPosition = Modules::ModuleCamera::Instance().GetPosition();
 
-	//	return true;
-	//}
-	//
-	//bool VariableCameraLoad(const std::vector<std::string>& Arguments, std::string& returnInfo)
-	//{
-	//	auto mode = Utils::String::ToLower(Modules::ModuleCamera::Instance().VarCameraMode->ValueString);
-	//	Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
+		return true;
+	}
+	
+	bool VariableCameraLoad(const std::vector<std::string>& Arguments, std::string& returnInfo)
+	{
+		auto mode = Utils::String::ToLower(Modules::ModuleCamera::Instance().VarCameraMode->ValueString);
+		Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
 
-	//	// only allow loading while in flycam or static modes
-	//	if (mode != "flying" && mode != "static")
-	//		return true;
+		// only allow loading while in flycam or static modes
+		if (mode != "flying" && mode != "static")
+			return true;
 
-	//	// TODO: finish
+		// TODO: finish
+		Modules::ModuleCamera::Instance().SetPosition(Modules::ModuleCamera::Instance().lastPosition);
 
-	//	return true;
-	//}
+		return true;
+	}
 
 	bool VariableCameraPositionUpdate(const std::vector<std::string>& Arguments, std::string& returnInfo) {
 		Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
@@ -394,6 +396,40 @@ namespace Modules
 		VarCameraShowCoordinates = AddVariableInt("ShowCoordinates", "coords", "The cameras field of view", eCommandFlagsArchived, 0, VariableCameraShowCoordinatesUpdate);
 		VarCameraShowCoordinates->ValueIntMin = 0;
 		VarCameraShowCoordinates->ValueIntMax = 1;
+	}
+
+	ModuleCamera::CameraPosistion ModuleCamera::GetPosition()
+	{
+		Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
+		Pointer &playerControlGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Input::TLSOffset)[0];
+
+		CameraPosistion currentPosition;
+
+		currentPosition.hLookAngle = playerControlGlobalsPtr(0x30C).Read<float>();
+		currentPosition.vLookAngle = playerControlGlobalsPtr(0x310).Read<float>();
+		currentPosition.xPos = directorGlobalsPtr(0x834).Read<float>();
+		currentPosition.yPos = directorGlobalsPtr(0x838).Read<float>();
+		currentPosition.zPos = directorGlobalsPtr(0x83C).Read<float>();
+
+		return currentPosition;
+	}
+
+	void ModuleCamera::SetPosition(ModuleCamera::CameraPosistion position)
+	{
+		Pointer &directorGlobalsPtr = ElDorito::GetMainTls(GameGlobals::Director::TLSOffset)[0];
+
+		// update position
+		directorGlobalsPtr(0x834).WriteFast<float>(position.xPos);
+		directorGlobalsPtr(0x838).WriteFast<float>(position.yPos);
+		directorGlobalsPtr(0x83C).WriteFast<float>(position.zPos);
+
+		// update look angles
+		directorGlobalsPtr(0x85C).WriteFast<float>(cos(position.hLookAngle) * cos(position.vLookAngle));
+		directorGlobalsPtr(0x860).WriteFast<float>(sin(position.hLookAngle) * cos(position.vLookAngle));
+		directorGlobalsPtr(0x864).WriteFast<float>(sin(position.vLookAngle));
+		directorGlobalsPtr(0x868).WriteFast<float>(-cos(position.hLookAngle) * sin(position.vLookAngle));
+		directorGlobalsPtr(0x86C).WriteFast<float>(-sin(position.hLookAngle) * sin(position.vLookAngle));
+		directorGlobalsPtr(0x870).WriteFast<float>(cos(position.vLookAngle));
 	}
 
 	void ModuleCamera::UpdatePosition()

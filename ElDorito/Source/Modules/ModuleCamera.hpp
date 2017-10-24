@@ -10,6 +10,16 @@ namespace Modules
 	class ModuleCamera : public Utils::Singleton<ModuleCamera>, public ModuleBase
 	{
 	public:
+		struct CameraPosistion
+		{
+		public:
+			float hLookAngle;
+			float vLookAngle;
+			float xPos;
+			float yPos;
+			float zPos;
+		};
+
 		Command* VarCameraCrosshair;
 		Command* VarCameraFov;
 		Command* VarCameraHideHud;
@@ -43,6 +53,12 @@ namespace Modules
 
 		ModuleCamera();
 
+		CameraPosistion GetPosition();
+
+		void SetPosition(CameraPosistion position);
+
 		void UpdatePosition();
+
+		CameraPosistion lastPosition;
 	};
 }
